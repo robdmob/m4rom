@@ -3,7 +3,9 @@ PROJ_NAME = M4ROM
 AS:=sdasz80
 CC:=sdcc
 LD:=sdcc
-HEXBIN?=./hex2bin.exe
+HEXBIN?=hex2bin
+HOST?=6128plus
+IP?=`nmblookup $(HOST) | awk '/^[0-9]+/ {print $$1}'`
 
 OBJS = $(SRCS:.s=.rel)
 .SUFFIXES: .c .s 
@@ -28,9 +30,18 @@ $(PROJ_NAME).BIN: #$(OBJS)
 
 clean:
 	-rm -f *.rel
+	-rm -f *.ihx
+	-rm -f *.map
+	-rm -f *.noi
+	-rm -f *.lk	
 
 distclean: clean
 	-rm -f $(PROJ_NAME).BIN
+
+# Transfer to computer
+install: all
+	cpcxfer -u $(IP) $(PROJ_NAME).BIN / 0
+	cpcxfer -r $(IP)
 
 # Create the container able to build the ROM
 # The aim of the contianer is to not install dependencies on the computer
@@ -40,4 +51,4 @@ docker_build_container:
 # Create the ROM inside the container
 docker_build_rom: docker_build_container
 	make distclean
-	docker run --rm=true -v $$(pwd):/src/m4rom -t m4  make HEXBIN=hex2bin
+	docker run --rm=true -v $$(pwd):/src/m4rom -t m4  make HEXBIN=hex2bin	

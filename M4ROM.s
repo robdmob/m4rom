@@ -23,7 +23,7 @@ DATAPORT						.equ 0xFE00
 ACKPORT						.equ 0xFC00
 
 			.db	0x01
-			.db	2, 0, 0
+			.db	2, 0, 7
 	
 			.dw	rsx_commands
 
@@ -76,6 +76,9 @@ ACKPORT						.equ 0xFC00
   			jp	ctrupload
   			jp	dsk_extract
   			jp	romsoff
+			jp  printer
+			jp  form_feed
+
 rsx_commands:
 			.ascis "M4 BOARD"	
 			.ascis "SD"
@@ -124,6 +127,8 @@ rsx_commands:
 			.ascis "CTRUP"
 			.ascis "DSKX"
 			.ascis "ROMSOFF"
+			.ascis "M4PRINT"
+			.ascis "FEED"
 			.db 0
 
 
@@ -304,7 +309,7 @@ init_plus:	;ld	hl,#0
 			jp 	0x77
 
 init_msg:
-			.ascii " M4 Board v2.0.6"
+			.ascii " M4 Board v2.0.7 RD"
 			.db 10, 13, 10, 13, 0
 				
 			; ------------------------- strncmp
@@ -2537,17 +2542,38 @@ disp_ip_loop:
 			
 ; ------------------------- get time and date
 gettime:
+			push af
 			ld	iy,(#rom_workspace)
 			ld	(iy),#2
 			ld	1(iy),#C_TIME
 			ld	2(iy),#C_TIME>>8
 			call	send_command_iy
 			
-			ld	hl,#rom_response+3
+			pop af
+			dec a
+			jr	z, copytime
+			
+			ld	hl,#rom_response+3 
 			call	disp_msg
 			scf
 			sbc	a,a
 			ret
+
+copytime:			
+			ld	l,(ix)
+			ld	h,1(ix)
+			ld	b,(hl)
+			inc	hl
+			ld	e,(hl)
+			inc	hl
+			ld	d,(hl)
+			ld	hl,#rom_response+3
+			call	strcpy
+			scf
+			sbc	a,a
+			ret
+
+
 ; ------------------------- get version
 version:
 			ld	iy,(#rom_workspace)
@@ -3174,7 +3200,14 @@ ext_ok:		scf
 ;			ld	sp, #0xAD33
 ;			ld	bc, bios jump block ?
 ;			jp	(hl)
-			
+
+printer:		
+
+form_feed:
+			ld a,#12
+			call mc_print_char
+			ld a,#04
+			jp mc_print_char
 			
 ; -------------- BIOS disc I/O
 

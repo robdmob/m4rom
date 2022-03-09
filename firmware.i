@@ -38,3 +38,7 @@ kl_rom_select					.equ 0xb90f
 kl_curr_selection 				.equ 0xb912
 kl_ldir						.equ 0xb91b
 
+mc_reset_printer			.equ 0xbd28
+mc_print_char				.equ 0xbd2b
+ind_mc_wait_printer			.equ 0xbdf1
+
