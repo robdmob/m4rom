@@ -3,9 +3,10 @@ PROJ_NAME = M4ROM
 AS:=sdasz80
 CC:=sdcc
 LD:=sdcc
-HEXBIN?=hex2bin
+HEXBIN?=hex2bin.exe
 HOST?=6128plus
-IP?=`nmblookup $(HOST) | awk '/^[0-9]+/ {print $$1}'`
+#IP?=`nmblookup $(HOST) | awk '/^[0-9]+/ {print $$1}'`
+IP=192.168.2.74
 
 OBJS = $(SRCS:.s=.rel)
 .SUFFIXES: .c .s 

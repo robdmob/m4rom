@@ -10,20 +10,24 @@
 			.include "firmware.i"
 			.include "m4cmds.i"
 
-rom_response					.equ	0xE800
-m4_workspace 					.equ rom_response+0xA00
-snamem 						.equ rom_response+0xB00
-rom_config					.equ rom_response+0xC00
+rom_version			.equ 0x0208
 
-sock_status					.equ	0xFE00
-rom_table						.equ	0xFF00
-UDIR_RAM_Address 				.equ 0xBEA3
+rom_response		.equ 0xE800
+m4_workspace		.equ rom_response+0xA00
+snamem				.equ rom_response+0xB00
+rom_config			.equ rom_response+0xC00
 
-DATAPORT						.equ 0xFE00
-ACKPORT						.equ 0xFC00
+sock_status			.equ 0xFE00
+rom_table			.equ 0xFF00
+UDIR_RAM_Address	.equ 0xBEA3
+
+DATAPORT			.equ 0xFE00
+ACKPORT				.equ 0xFC00
 
 			.db	0x01
-			.db	2, 0, 7
+			.db	>rom_version
+			.db (rom_version>>4)&0xF
+			.db rom_version&0xF
 	
 			.dw	rsx_commands
 
@@ -309,7 +313,12 @@ init_plus:	;ld	hl,#0
 			jp 	0x77
 
 init_msg:
-			.ascii " M4 Board v2.0.7 RD"
+			.ascii " M4 Board v"
+			.db '0'+>rom_version
+			.db '.'
+			.db '0'+(rom_version>>4&0xF)
+			.db '.'
+			.db '0'+(rom_version&0xF)
 			.db 10, 13, 10, 13, 0
 				
 			; ------------------------- strncmp
@@ -5923,7 +5932,7 @@ sock_info:	.ds	80	; 5 socket status structures (0 is used for gethostbyname*, 1-
 ; *for socket 0, gethostbyname, status will be set to 5 when in progress and back to 0, when done.
 
 .org	rom_table
-			.dw	#0x206	; rom version		0xFF00
+			.dw	rom_version	; rom version		0xFF00
 			.dw	rom_response		; 0xFF02
 			.dw	rom_config		; 0xFF04
 			.dw	sock_info			; 0xFF06
@@ -5931,7 +5940,7 @@ sock_info:	.ds	80	; 5 socket status structures (0 is used for gethostbyname*, 1-
 			.dw	run_filename		; 0xFF0A
 			.dw	tape_functions		; 0xFF0C
 			.dw  snamem			; 0xFF0E
-         		.dw  memwrite			; 0xFF10
+         	.dw  memwrite			; 0xFF10
 ; SNA rom/ram switching, similar to SNArkos
 .org	0xFFF0
 sna_jumper:
