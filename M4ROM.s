@@ -80,6 +80,7 @@ ACKPORT				.equ 0xFC00
   			jp	ctrupload
   			jp	dsk_extract
   			jp	romsoff
+			jp	GETPATH
 			jp  printer
 			jp  form_feed
 
@@ -131,6 +132,7 @@ rsx_commands:
 			.ascis "CTRUP"
 			.ascis "DSKX"
 			.ascis "ROMSOFF"
+			.ascis "PWD"
 			.ascis "M4PRINT"
 			.ascis "FEED"
 			.db 0
@@ -2941,6 +2943,10 @@ change_dir:
 			ld	iy,(#rom_workspace)
 			cp	#0
 			jr	nz,cd_has_args
+			ld	a,(basic_ver)
+			cp	#0
+			jr	nz,cd_root
+			; basic 1.0 
 			call	txt_get_window			; TXT GET WINDOW ( D = max column )
 			ld	(iy),#0		; offset 0 = init
 			inc	d
@@ -2953,6 +2959,12 @@ change_dir:
 			ld	(iy),a		; size
 			ld	1(iy),#C_CD
 			ld	2(iy),#C_CD>>8
+			jr	send_cd_cmd
+cd_root:
+			ld	(iy),#3
+			ld	1(iy),#C_CD
+			ld	2(iy),#C_CD>>8
+			ld	3(iy),#'/'
 			jr	send_cd_cmd
 			
 cd_has_args:			

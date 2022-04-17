@@ -30,14 +30,14 @@ $(PROJ_NAME).BIN: #$(OBJS)
 
 
 clean:
-	-rm -f *.rel
-	-rm -f *.ihx
-	-rm -f *.map
-	-rm -f *.noi
-	-rm -f *.lk	
+	rm *.rel
+	rm *.ihx
+	rm *.map
+	rm *.noi
+	rm *.lk	
 
 distclean: clean
-	-rm -f $(PROJ_NAME).BIN
+	rm $(PROJ_NAME).BIN
 
 # Transfer to computer
 install: all
