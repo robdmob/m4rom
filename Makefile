@@ -6,7 +6,7 @@ LD:=sdcc
 HEXBIN?=hex2bin.exe
 HOST?=6128plus
 #IP?=`nmblookup $(HOST) | awk '/^[0-9]+/ {print $$1}'`
-IP=192.168.2.74
+IP=192.168.2.87
 
 OBJS = $(SRCS:.s=.rel)
 .SUFFIXES: .c .s 

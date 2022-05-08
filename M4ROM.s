@@ -10,7 +10,7 @@
 			.include "firmware.i"
 			.include "m4cmds.i"
 
-rom_version			.equ 0x0208
+rom_version			.equ 0x0217
 
 rom_response		.equ 0xE800
 m4_workspace		.equ rom_response+0xA00
@@ -81,7 +81,7 @@ ACKPORT				.equ 0xFC00
   			jp	dsk_extract
   			jp	romsoff
 			jp	GETPATH
-			jp  printer
+			jp  netprint
 			jp  form_feed
 
 rsx_commands:
@@ -133,7 +133,7 @@ rsx_commands:
 			.ascis "DSKX"
 			.ascis "ROMSOFF"
 			.ascis "PWD"
-			.ascis "M4PRINT"
+			.ascis "NETPRINT"
 			.ascis "FEED"
 			.db 0
 
@@ -2961,10 +2961,11 @@ change_dir:
 			ld	2(iy),#C_CD>>8
 			jr	send_cd_cmd
 cd_root:
-			ld	(iy),#3
+			ld	(iy),#4
 			ld	1(iy),#C_CD
 			ld	2(iy),#C_CD>>8
 			ld	3(iy),#'/'
+			ld	4(iy),#0
 			jr	send_cd_cmd
 			
 cd_has_args:			
@@ -3222,7 +3223,63 @@ ext_ok:		scf
 ;			ld	bc, bios jump block ?
 ;			jp	(hl)
 
-printer:		
+; -------------- Network Printing
+
+netprint:
+			ld iy,(#rom_workspace)
+			cp #4
+			jr nz,no_ip
+
+			ld a,(printer_socket)
+			cp #0
+			jr nz,save_ip
+
+			ld (iy),#5
+			ld 1(iy),#C_NETSOCKET
+			ld 2(iy),#C_NETSOCKET>>8
+			ld 3(iy),#0
+			ld 4(iy),#0
+			ld 5(iy),#6
+			call send_command_iy
+			ld a,(#rom_response+3)
+			cp #255
+			jr z,netprint_end
+save_ip:
+			ld (iy),#8
+			ld 1(iy),#C_CONFIG
+			ld 2(iy),#C_CONFIG>>8
+			ld 3(iy),#83
+			ld 4(iy),a						
+			ld a,(ix)
+			ld 5(iy),a
+			ld a,2(ix)
+			ld 6(iy),a			
+			ld a,4(ix)
+			ld 7(iy),a			
+			ld a,6(ix)
+			ld 8(iy),a
+			call send_command_iy
+			jr netprint_end
+
+no_ip:
+			ld a,(printer_socket)
+			cp #0
+			jr z,netprint_end
+			ld (iy),#3
+			ld 1(iy),#C_NETCLOSE
+			ld 2(iy),#C_NETCLOSE>>8
+			ld 3(iy),a
+			call send_command_iy
+			ld (iy),#4
+			ld 1(iy),#C_CONFIG
+			ld 2(iy),#C_CONFIG>>8
+			ld 3(iy),#83
+			ld 4(iy),#0
+			call send_command_iy
+netprint_end:
+			scf
+			sbc a,a
+			ret
 
 form_feed:
 			ld a,#12
@@ -5931,6 +5988,10 @@ amsdos_default_user:
 				.db	0		; 81
 amsdos_active_drive:				
 				.db	0		; 82
+printer_socket:
+				.db 0		; 83
+printer_ip:
+				.ds 4		; 84
 
 .org	sock_status
 sock_info:	.ds	80	; 5 socket status structures (0 is used for gethostbyname*, 1-4 returned by socket function) of 16 bytes
